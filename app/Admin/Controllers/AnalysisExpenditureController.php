@@ -7,20 +7,20 @@ use Dcat\Admin\Grid;
 use Dcat\Admin\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\DB;
 
-class AnalysisCategoryController extends AdminController
+class AnalysisExpenditureController extends AdminController
 {
     protected function grid()
     {
         return Grid::make(new Trade(), function (Grid $grid) {
             $grid->model()
-                ->join('order', 'order.trade_id', '=', 'trade.id')
-                ->join('goods', 'goods.id', '=', 'order.goods_id')
-                ->join('category', 'category.id', '=', 'goods.category_id')
-                ->select('goods.id', 'category.name as category_name', DB::raw('COUNT(*) as total'))
-                ->groupBy('goods.id')
+                ->join('users', 'users.id', '=', 'trade.user_id')
+                ->select('users.id', 'users.name as users_name', 'users.mobile as users_mobile',
+                    DB::raw('SUM(trade.total_amount) as total'))
+                ->groupBy('users.id')
                 ->orderBy('total', 'desc');
-            $grid->column('category_name', '分类名称');
-            $grid->column('total', '订单数量');
+            $grid->column('users_name', '用户姓名');
+            $grid->column('users_mobile', '联系方式');
+            $grid->column('total', '消费支出');
 
             $grid->disableActions();
             $grid->disableRefreshButton();
@@ -29,11 +29,11 @@ class AnalysisCategoryController extends AdminController
             $grid->export();
             $grid->export()->disableExportSelectedRow();
 
-            $titles = ['category_name' => '分类名称', 'total' => '订单数量'];
+            $titles = ['users_name' => '用户姓名', 'users_mobile' => '联系方式', 'total' => '消费支出'];
             $grid->export()->titles($titles);
             $grid->export()->rows(function ($rows) {
                 return $rows;
-            })->filename('数据统计-品类分布');
+            })->filename('数据统计-消费支出');
         });
     }
 }

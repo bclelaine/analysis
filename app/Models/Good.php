@@ -10,6 +10,8 @@ class Good extends Model
 {
     use HasDateTimeFormatter;
 
+    protected $table = 'goods';
+
     const GOODS_STATUS = [
         0 => '上架',
         1 => '下架'
