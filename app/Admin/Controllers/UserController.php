@@ -23,7 +23,6 @@ class UserController extends AdminController
             $grid->column('email');
             $grid->column('sex')->using(\App\Models\User::SEX);
             $grid->column('age');
-            $grid->column('email_verified_at');
             $grid->column('created_at')->sortable();
             $grid->column('updated_at')->sortable();
 

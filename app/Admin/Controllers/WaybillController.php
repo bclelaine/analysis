@@ -27,9 +27,14 @@ class WaybillController extends AdminController
             $grid->column('updated_at')->sortable();
 
             $grid->filter(function (Grid\Filter $filter) {
-                $filter->equal('id');
-
+                $filter->equal('trade.trade_no', '订单号');
+                $filter->equal('logistics_no', '运单号');
             });
+
+            $grid->disableActions();
+            $grid->disableRefreshButton();
+            $grid->disableCreateButton();
+            $grid->disableBatchActions();
         });
     }
 

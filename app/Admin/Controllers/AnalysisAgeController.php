@@ -14,10 +14,11 @@ class AnalysisAgeController extends AdminController
         return Grid::make(new Trade(), function (Grid $grid) {
             $grid->model()
                 ->join('users', 'users.id', '=', 'trade.user_id')
-                ->select('users.age as users_age', DB::raw('COUNT(*) as total_orders'))
-                ->groupBy('users.age');
+                ->select('users.age as users_age', DB::raw('COUNT(*) as total'))
+                ->groupBy('users.age')
+                ->orderBy('total', 'desc');
             $grid->column('users_age', '用户年龄');
-            $grid->column('total_orders', '订单数量');
+            $grid->column('total', '订单数量');
 
             $grid->disableActions();
             $grid->disableRefreshButton();
@@ -26,7 +27,7 @@ class AnalysisAgeController extends AdminController
             $grid->export();
             $grid->export()->disableExportSelectedRow();
 
-            $titles = ['users_age' => '用户年龄', 'total_orders' => '订单数量'];
+            $titles = ['users_age' => '用户年龄', 'total' => '订单数量'];
             $grid->export()->titles($titles);
             $grid->export()->rows(function ($rows) {
                 return $rows;

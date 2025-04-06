@@ -5,6 +5,7 @@ namespace App\Models;
 use Dcat\Admin\Traits\HasDateTimeFormatter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Trade extends Model
 {
@@ -47,5 +48,15 @@ class Trade extends Model
     public function distinct(): BelongsTo
     {
         return $this->belongsTo(Distinct::class, 'distinct_code', 'distinct_code');
+    }
+
+    public function waybill(): HasOne
+    {
+        return $this->hasOne(Waybill::class, 'trade_id', 'id');
+    }
+
+    public function order(): HasOne
+    {
+        return $this->hasOne(Order::class, 'trade_id', 'id');
     }
 }

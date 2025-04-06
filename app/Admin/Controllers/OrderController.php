@@ -2,13 +2,12 @@
 
 namespace App\Admin\Controllers;
 
-use App\Models\Good;
 use App\Models\Order;
-use App\Models\Trade;
 use Dcat\Admin\Form;
 use Dcat\Admin\Grid;
 use Dcat\Admin\Http\Controllers\AdminController;
 use Dcat\Admin\Show;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends AdminController
 {
@@ -19,18 +18,28 @@ class OrderController extends AdminController
      */
     protected function grid()
     {
-        return Grid::make(Order::with(['trade', 'good']), function (Grid $grid) {
-            $grid->column('trade.trade_no', '订单号');
-            $grid->column('good.name', '商品名称');
-            $grid->column('price');
+        return Grid::make(new Order(), function (Grid $grid) {
+            $grid->model()
+                ->join('trade', 'trade.id', '=', 'order.trade_id')
+                ->join('goods', 'goods.id', '=', 'order.goods_id')
+                ->select('order.id', 'trade.trade_no as trade_no', 'trade.goods_amount as goods_amount', 'goods.name as goods_name',
+                    'order.number', 'order.created_at', 'order.updated_at', DB::raw('trade.goods_amount/order.number as price'));
+            $grid->column('trade_no', '订单号');
+            $grid->column('goods_name', '商品名称');
+            $grid->column('price', '商品单价');
             $grid->column('number');
-            $grid->column('total_price');
+            $grid->column('goods_amount', '商品金额');
             $grid->column('created_at');
             $grid->column('updated_at')->sortable();
 
             $grid->filter(function (Grid\Filter $filter) {
-                $filter->equal('id');
+                $filter->equal('trade_no', '订单号');
             });
+
+            $grid->disableActions();
+            $grid->disableRefreshButton();
+            $grid->disableCreateButton();
+            $grid->disableBatchActions();
         });
     }
 
@@ -43,14 +52,7 @@ class OrderController extends AdminController
      */
     protected function detail($id)
     {
-        return Show::make($id, Order::with(['trade', 'good']), function (Show $show) {
-            $show->field('trade.trade_no', '订单号');
-            $show->field('good.name', '商品名称');
-            $show->field('price');
-            $show->field('number');
-            $show->field('total_price');
-            $show->field('created_at');
-            $show->field('updated_at');
+        return Show::make($id, new Order(), function (Show $show) {
         });
     }
 
@@ -61,23 +63,7 @@ class OrderController extends AdminController
      */
     protected function form()
     {
-        return Form::make(Order::with(['trade', 'good']), function (Form $form) {
-            $form->select('trade_id', '订单号')
-                ->options(Trade::query()->pluck('trade_no', 'id'))
-                ->saving(function ($v) {
-                    return (int)$v;
-                });
-            $form->select('goods_id', '商品名称')
-                ->options(Good::query()->pluck('name', 'id'))
-                ->saving(function ($v) {
-                    return (int)$v;
-                });
-            $form->text('price');
-            $form->text('number');
-            $form->text('total_price');
-
-            $form->display('created_at');
-            $form->display('updated_at');
+        return Form::make(new Order(), function (Form $form) {
         });
     }
 }

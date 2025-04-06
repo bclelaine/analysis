@@ -5,6 +5,8 @@ namespace App\Admin\Controllers;
 use App\Admin\Repositories\Trade;
 use App\Models\City;
 use App\Models\Distinct;
+use App\Models\Good;
+use App\Models\Logistic;
 use App\Models\Platform;
 use App\Models\Province;
 use App\Models\Shop;
@@ -43,8 +45,8 @@ class TradeController extends AdminController
             $grid->column('updated_at')->sortable();
 
             $grid->filter(function (Grid\Filter $filter) {
-                $filter->equal('id');
-
+                $filter->equal('trade_no', '订单号');
+                $filter->equal('waybill_no', '运单号');
             });
         });
     }
@@ -102,8 +104,8 @@ class TradeController extends AdminController
                 ->saving(function ($v) {
                     return (int)$v;
                 });
-            $form->text('trade_no');
-            $form->select('status')->options(['0' => '待付款', '1' => '待发货', '2' => '待收货', '3' => '已完成'])->default('0');
+            $form->text('trade_no')->default($this->buildTradeNo());
+            $form->select('status')->options(\App\Models\Trade::TRADE_STATUS)->default('0');
             $form->select('province_code', '省/直辖市')
                 ->options(Province::query()->pluck('province_name', 'province_code'))
                 ->saving(function ($v) {
@@ -122,13 +124,46 @@ class TradeController extends AdminController
             $form->text('town');
             $form->text('address');
             $form->text('mobile');
-            $form->text('goods_amount');
+
+            $form->select('order.goods_id', '商品名称')
+                ->options(Good::query()->pluck('name', 'id'))
+                ->saving(function ($v) {
+                    return (int)$v;
+                });
+            $form->text('order.number', '商品数量');
             $form->text('post_amount');
-            $form->text('total_amount');
-            $form->text('waybill_no');
+
+            $form->select('waybill.logistics_id', '物流公司')
+                ->options(Logistic::query()->pluck('name', 'id'))
+                ->saving(function ($v) {
+                    return (int)$v;
+                });
+            $form->text('waybill.logistics_no', '物流单号');
+            $form->hidden('waybill_no', '运单号');
+            $form->hidden('goods_amount', '商品金额');
+            $form->hidden('total_amount', '订单总金额');
+
+            $form->submitted(function (Form $form) {
+                // 物流单号
+                $form->waybill_no = \request('waybill.logistics_no');
+                // 商品信息
+                $goods = Good::query()->where('id', '=', \request('order.goods_id'))->first();
+                // 商品金额
+                $goods_price = $goods->price * \request('order.number');
+                $form->goods_amount = $goods_price;
+                $form->total_amount = $goods_price + \request('post_amount');
+            });
 
             $form->display('created_at');
             $form->display('updated_at');
         });
+    }
+
+    /**
+     * @return string 自动生成的订单号
+     */
+    function buildTradeNo(): string
+    {
+        return now()->format('YmdHis') . mt_rand(1000, 9999);
     }
 }
